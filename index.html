@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future Link Live - ISP Admin Portal</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* লগইন ডিজাইন */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; align-items: center; justify-content: center; z-index: 5000;
+        }
+        .login-box { 
+            background: #111; padding: 40px; border-radius: 15px; 
+            border: 2px solid red; text-align: center; width: 85%; max-width: 350px;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+        input { 
+            padding: 12px; width: 90%; margin: 10px 0; 
+            border-radius: 5px; border: 1px solid #333; background: #222; color: white;
+        }
+        .login-btn { 
+            background: red; color: white; padding: 12px; width: 100%; 
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px;
+        }
+
+        /* মেইন টিভি ইন্টারফেস */
+        .header { height: 60px; background: red; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-weight: bold; }
+        .content-frame { width: 100%; height: calc(100% - 110px); border: none; }
+        .footer { height: 50px; background: #111; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666; }
+        
+        #expire-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 6000; text-align: center; padding-top: 150px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="color:red; margin-bottom:20px;">FUTURE LINK LIVE</h2>
+            <input type="text" id="usernameInput" placeholder="ইউজারনেম (Username)">
+            <input type="password" id="pinInput" placeholder="পিন (PIN)">
+            <button class="login-btn" onclick="checkLogin()">লগইন করুন</button>
+            <p id="error-msg" style="color:yellow; font-size:13px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <div id="expire-screen">
+        <h1 style="color:red;">মেয়াদ শেষ!</h1>
+        <p>আপনার ৩০ দিনের মেয়াদ শেষ হয়েছে।</p>
+        <p>আবার চালু করতে রিচার্জ করুন। যোগাযোগ: 01XXXXXXXXX</p>
+        <button class="login-btn" onclick="logout()" style="width: auto; padding: 10px 20px;">লগআউট</button>
+    </div>
+
+    <div class="header">
+        <span>FUTURE LINK LIVE</span>
+        <button onclick="logout()" style="background:white; color:red; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer; font-weight:bold;">LOGOUT</button>
+    </div>
+
+    <iframe class="content-frame" src="https://live.hplink.com.bd/" title="HP Link Live Content"></iframe>
+
+    <div class="footer">© FUTURE LINK | ISP SERVICE</div>
+
+    <script>
+        // --- ইউজার লিস্ট (এখান থেকে আপনি ইউজার ও পিন ম্যানেজ করবেন) ---
+        const USERS_DATABASE = {
+            "sagor": "1122",   // ইউজার ১
+            "rahim": "3344",   // ইউজার ২
+            "karim": "5566",   // ইউজার ৩
+            "user1": "0000"    // ইউজার ৪
+        };
+        const VALID_DAYS = 30;
+
+        function checkLogin() {
+            const user = document.getElementById('usernameInput').value;
+            const pin = document.getElementById('pinInput').value;
+            const error = document.getElementById('error-msg');
+
+            if (USERS_DATABASE[user] && USERS_DATABASE[user] === pin) {
+                const loginTime = new Date().getTime();
+                localStorage.setItem('currentUser', user);
+                // যদি আগে থেকে লগইন টাইম না থাকে তবেই সেট করবে (যাতে ৩০ দিন ঠিক থাকে)
+                if (!localStorage.getItem('loginDate_' + user)) {
+                    localStorage.setItem('loginDate_' + user, loginTime);
+                }
+                location.reload();
+            } else {
+                error.innerText = "ইউজারনেম বা পিন ভুল!";
+            }
+        }
+
+        function startExpiryCheck() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                const savedDate = localStorage.getItem('loginDate_' + currentUser);
+                const now = new Date().getTime();
+                const diffTime = now - savedDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays >= VALID_DAYS) {
+                    document.getElementById('expire-screen').style.display = 'block';
+                    document.getElementById('login-screen').style.display = 'none';
+                } else {
+                    document.getElementById('login-screen').style.display = 'none';
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        window.onload = startExpiryCheck;
+    </script>
+
+</body>
+</html>
