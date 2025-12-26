@@ -64,30 +64,36 @@
 
     <script>
         // --- ইউজার লিস্ট (এখান থেকে আপনি ইউজার ও পিন ম্যানেজ করবেন) ---
-        const USERS_DATABASE = {
-            "sagor": "1122",   // ইউজার ১
-            "rahim": "3344",   // ইউজার ২
-            "karim": "5566",   // ইউজার ৩
-            "user1": "0000"    // ইউজার ৪
-        };
-        const VALID_DAYS = 30;
+        // আপনার গুগল শিটের CSV লিঙ্ক এখানে
+const sheetURL = "https://docs.google.com/spreadsheets/d/1bogW_46uS2jJUmYdnncfT_9_ba4SCiIIWdGgODBYojE/export?format=csv";
 
-        function checkLogin() {
-            const user = document.getElementById('usernameInput').value;
-            const pin = document.getElementById('pinInput').value;
-            const error = document.getElementById('error-msg');
+async function checkLogin() {
+    const user = document.getElementById('usernameInput').value.trim().toLowerCase();
+    const pin = document.getElementById('pinInput').value.trim();
+    const error = document.getElementById('error-msg');
 
-            if (USERS_DATABASE[user] && USERS_DATABASE[user] === pin) {
-                const loginTime = new Date().getTime();
-                localStorage.setItem('currentUser', user);
-                // যদি আগে থেকে লগইন টাইম না থাকে তবেই সেট করবে (যাতে ৩০ দিন ঠিক থাকে)
-                if (!localStorage.getItem('loginDate_' + user)) {
-                    localStorage.setItem('loginDate_' + user, loginTime);
-                }
+    try {
+        const response = await fetch(sheetURL);
+        const data = await response.text();
+        const rows = data.split('\n');
+        let found = false;
+
+        // ২ নম্বর সারি থেকে চেক শুরু
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i].split(',');
+            if (cols[0]?.trim().toLowerCase() === user && cols[1]?.trim() === pin) {
+                found = true;
+                localStorage.setItem('currentUserName', user);
+                localStorage.setItem('currentUser', user); // আগের কোডের সাথে সামঞ্জস্য রাখতে
                 location.reload();
-            } else {
-                error.innerText = "ইউজারনেম বা পিন ভুল!";
+                break;
             }
+        }
+        if (!found) error.innerText = "ইউজারনেম বা পিন ভুল!";
+    } catch (e) {
+        error.innerText = "সার্ভার সমস্যা! শিট পাবলিশ করেছেন কি?";
+    }
+}
         }
 
         function startExpiryCheck() {
