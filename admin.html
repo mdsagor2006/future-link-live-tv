@@ -2,56 +2,137 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Future Link</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Admin Panel - Future Link</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; text-align: center; }
-        .box { background: #333; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; }
-        input, button { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
-        button { background: red; color: white; font-weight: bold; cursor: pointer; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        th, td { border: 1px solid #555; padding: 8px; }
+        :root { --primary: #e74c3c; --dark: #1a1a1a; --card: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border-bottom: 4px solid var(--primary); }
+        .stat-card h3 { margin: 5px 0; font-size: 22px; }
+        .add-box { background: #fff; color: #333; padding: 20px; border-radius: 15px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .add-box h3 { grid-column: 1 / -1; margin: 0; color: var(--primary); }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .save-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; grid-column: 1 / -1; font-weight: bold; }
+        table { width: 100%; background: var(--card); border-radius: 10px; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; border-bottom: 1px solid #3e5871; text-align: left; }
+        th { background: #34495e; }
+        .btn-group { display: flex; gap: 5px; }
+        .del-btn { background: #ff4757; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; }
+        .edit-btn { background: #3498db; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; }
+        .active-tag { background: #2ed573; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
+        .expired-tag { background: #ff4757; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>নতুন গ্রাহক যোগ করুন</h2>
-    <input type="text" id="user" placeholder="ইউজারনেম">
-    <input type="text" id="pin" placeholder="পিন কোড">
-    <input type="date" id="expiry">
-    <button onclick="saveUser()">সেভ করুন</button>
+<div class="container">
+    <h1 style="text-align: center; color: var(--primary);"><i class="fas fa-user-shield"></i> Future Link Admin</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card"><p>মোট গ্রাহক</p><h3 id="totalCount">0</h3></div>
+        <div class="stat-card"><p>সক্রিয়</p><h3 id="activeCount">0</h3></div>
+        <div class="stat-card"><p>মেয়াদ শেষ</p><h3 id="expiredCount">0</h3></div>
+    </div>
+
+    <div class="add-box">
+        <h3><i class="fas fa-plus-circle"></i> গ্রাহক তথ্য যোগ/এডিট করুন</h3>
+        <input type="hidden" id="editKey">
+        <input type="text" id="user" placeholder="ইউজারনেম">
+        <input type="text" id="pin" placeholder="পিন কোড">
+        <input type="text" id="mobile" placeholder="মোবাইল নম্বর">
+        <input type="text" id="address" placeholder="ঠিকানা">
+        <input type="date" id="expiry">
+        <button class="save-btn" id="submitBtn" onclick="saveUser()">সেভ করুন</button>
+    </div>
+
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>ইউজার</th>
+                <th>মোবাইল</th>
+                <th>ঠিকানা</th>
+                <th>মেয়াদ</th>
+                <th>অবস্থা</th>
+                <th>অ্যাকশন</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 </div>
 
-<table id="userTable">
-    <tr><th>ইউজার</th><th>পিন</th><th>মেয়াদ</th></tr>
-</table>
-
 <script>
-    const dbURL = "https://futurelink-c5b45-default-rtdb.firebaseio.com/users.json";
+    const dbURL = "https://futurelink-c5b45-default-rtdb.firebaseio.com/users";
 
-    // গ্রাহক সেভ করার ফাংশন
     async function saveUser() {
         const username = document.getElementById('user').value.trim().toLowerCase();
         const pin = document.getElementById('pin').value.trim();
+        const mobile = document.getElementById('mobile').value.trim();
+        const address = document.getElementById('address').value.trim();
         const expiry = document.getElementById('expiry').value;
+        const editKey = document.getElementById('editKey').value;
 
-        if(!username || !pin || !expiry) return alert("সব তথ্য দিন!");
+        if(!username || !pin || !expiry) return alert("ইউজার, পিন এবং মেয়াদ অবশ্যই দিতে হবে!");
 
-        await fetch(dbURL, {
-            method: 'POST',
-            body: JSON.stringify({ username, pin, expiry })
-        });
-        alert("সফলভাবে যোগ হয়েছে!");
+        const userData = { username, pin, mobile, address, expiry };
+        
+        if(editKey) {
+            await fetch(`${dbURL}/${editKey}.json`, { method: 'PUT', body: JSON.stringify(userData) });
+        } else {
+            await fetch(`${dbURL}.json`, { method: 'POST', body: JSON.stringify(userData) });
+        }
+        
         location.reload();
     }
 
-    // সব গ্রাহক দেখানোর ফাংশন
     async function loadUsers() {
-        const res = await fetch(dbURL);
+        const res = await fetch(`${dbURL}.json`);
         const data = await res.json();
-        const table = document.getElementById('userTable');
+        const tbody = document.getElementById('tableBody');
+        let total = 0, active = 0, expired = 0;
+        const now = new Date();
+
         for(let id in data) {
-            table.innerHTML += `<tr><td>${data[id].username}</td><td>${data[id].pin}</td><td>${data[id].expiry}</td></tr>`;
+            total++;
+            const isExp = now > new Date(data[id].expiry);
+            if(isExp) expired++; else active++;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${data[id].username}</b><br><small>PIN: ${data[id].pin}</small></td>
+                    <td>${data[id].mobile || '-'}</td>
+                    <td>${data[id].address || '-'}</td>
+                    <td>${data[id].expiry}</td>
+                    <td><span class="${isExp ? 'expired-tag' : 'active-tag'}">${isExp ? 'Expired' : 'Active'}</span></td>
+                    <td class="btn-group">
+                        <button class="edit-btn" onclick="editUser('${id}', ${JSON.stringify(data[id]).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
+                        <button class="del-btn" onclick="deleteUser('${id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+        }
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('activeCount').innerText = active;
+        document.getElementById('expiredCount').innerText = expired;
+    }
+
+    function editUser(id, data) {
+        document.getElementById('editKey').value = id;
+        document.getElementById('user').value = data.username;
+        document.getElementById('pin').value = data.pin;
+        document.getElementById('mobile').value = data.mobile || '';
+        document.getElementById('address').value = data.address || '';
+        document.getElementById('expiry').value = data.expiry;
+        document.getElementById('submitBtn').innerText = "আপডেট করুন";
+        document.getElementById('submitBtn').style.background = "#3498db";
+        window.scrollTo(0,0);
+    }
+
+    async function deleteUser(id) {
+        if(confirm("ডিলিট করতে চান?")) {
+            await fetch(`${dbURL}/${id}.json`, { method: 'DELETE' });
+            location.reload();
         }
     }
     loadUsers();
