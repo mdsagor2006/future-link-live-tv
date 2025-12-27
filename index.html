@@ -63,50 +63,56 @@
     <div class="footer">© FUTURE LINK | ISP SERVICE</div>
 
     <script>
-        // --- ইউজার লিস্ট (এখান থেকে আপনি ইউজার ও পিন ম্যানেজ করবেন) ---
-        const USERS_DATABASE = {
-            "sagor": "1122",   // ইউজার ১
-            "rahim": "3344",   // ইউজার ২
-            "karim": "5566",   // ইউজার ৩
-            "user1": "0000"    // ইউজার ৪
-        };
-        const VALID_DAYS = 30;
+        const dbURL = "https://futurelink-c5b45-default-rtdb.firebaseio.com/users.json";
 
-        function checkLogin() {
-            const user = document.getElementById('usernameInput').value;
-            const pin = document.getElementById('pinInput').value;
-            const error = document.getElementById('error-msg');
+async function checkLogin() {
+    const userInput = document.getElementById('usernameInput').value.trim().toLowerCase();
+    const pinInput = document.getElementById('pinInput').value.trim();
+    const errorMsg = document.getElementById('error-msg');
 
-            if (USERS_DATABASE[user] && USERS_DATABASE[user] === pin) {
-                const loginTime = new Date().getTime();
-                localStorage.setItem('currentUser', user);
-                // যদি আগে থেকে লগইন টাইম না থাকে তবেই সেট করবে (যাতে ৩০ দিন ঠিক থাকে)
-                if (!localStorage.getItem('loginDate_' + user)) {
-                    localStorage.setItem('loginDate_' + user, loginTime);
-                }
-                location.reload();
-            } else {
-                error.innerText = "ইউজারনেম বা পিন ভুল!";
+    if (!userInput || !pinInput) {
+        errorMsg.innerText = "ইউজার এবং পিন দিন!";
+        return;
+    }
+
+    try {
+        const response = await fetch(dbURL);
+        const allUsers = await response.json();
+        let isSuccess = false;
+
+        // ফায়ারবেস থেকে আপনার বানানো সব ইউজার চেক করা হচ্ছে
+        for (let key in allUsers) {
+            if (allUsers[key].username === userInput && allUsers[key].pin === pinInput) {
+                isSuccess = true;
+                localStorage.setItem('currentUser', userInput);
+                localStorage.setItem('expiryDate', allUsers[key].expiry);
+                location.reload(); // লগইন সফল
+                break;
             }
         }
 
-        function startExpiryCheck() {
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                const savedDate = localStorage.getItem('loginDate_' + currentUser);
-                const now = new Date().getTime();
-                const diffTime = now - savedDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays >= VALID_DAYS) {
-                    document.getElementById('expire-screen').style.display = 'block';
-                    document.getElementById('login-screen').style.display = 'none';
-                } else {
-                    document.getElementById('login-screen').style.display = 'none';
-                }
-            }
+        if (!isSuccess) {
+            errorMsg.innerText = "ইউজারনেম বা পিন ভুল!";
         }
+    } catch (e) {
+        errorMsg.innerText = "সার্ভার সমস্যা! ডাটাবেস চেক করুন।";
+    }
+}
+function startExpiryCheck() {
+    const currentUser = localStorage.getItem('currentUser');
+    const expiryDateStr = localStorage.getItem('expiryDate');
 
+    if (currentUser && expiryDateStr) {
+        const now = new Date();
+        const expiryDate = new Date(expiryDateStr);
+
+        // আজকের তারিখ মেয়াদের চেয়ে বেশি হলে লক করে দেবে
+        if (now > expiryDate) {
+            document.getElementById('expire-screen').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+        }
+    }
+}
         function logout() {
             localStorage.removeItem('currentUser');
             location.reload();
