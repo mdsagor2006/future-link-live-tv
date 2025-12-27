@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Future Link</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .box { background: #333; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; }
+        input, button { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        button { background: red; color: white; font-weight: bold; cursor: pointer; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { border: 1px solid #555; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>নতুন গ্রাহক যোগ করুন</h2>
+    <input type="text" id="user" placeholder="ইউজারনেম">
+    <input type="text" id="pin" placeholder="পিন কোড">
+    <input type="date" id="expiry">
+    <button onclick="saveUser()">সেভ করুন</button>
+</div>
+
+<table id="userTable">
+    <tr><th>ইউজার</th><th>পিন</th><th>মেয়াদ</th></tr>
+</table>
+
+<script>
+    const dbURL = "https://futurelink-c5b45-default-rtdb.firebaseio.com/users.json";
+
+    // গ্রাহক সেভ করার ফাংশন
+    async function saveUser() {
+        const username = document.getElementById('user').value.trim().toLowerCase();
+        const pin = document.getElementById('pin').value.trim();
+        const expiry = document.getElementById('expiry').value;
+
+        if(!username || !pin || !expiry) return alert("সব তথ্য দিন!");
+
+        await fetch(dbURL, {
+            method: 'POST',
+            body: JSON.stringify({ username, pin, expiry })
+        });
+        alert("সফলভাবে যোগ হয়েছে!");
+        location.reload();
+    }
+
+    // সব গ্রাহক দেখানোর ফাংশন
+    async function loadUsers() {
+        const res = await fetch(dbURL);
+        const data = await res.json();
+        const table = document.getElementById('userTable');
+        for(let id in data) {
+            table.innerHTML += `<tr><td>${data[id].username}</td><td>${data[id].pin}</td><td>${data[id].expiry}</td></tr>`;
+        }
+    }
+    loadUsers();
+</script>
+</body>
+</html>
