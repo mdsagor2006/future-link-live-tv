@@ -3,35 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Future Link Live - ISP Admin Portal</title>
+    <title>FUTURE LINK LIVE TV</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* লগইন ডিজাইন */
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; align-items: center; justify-content: center; z-index: 5000;
-        }
-        .login-box { 
-            background: #111; padding: 40px; border-radius: 15px; 
-            border: 2px solid red; text-align: center; width: 85%; max-width: 350px;
-            box-shadow: 0 0 20px rgba(255,0,0,0.5);
-        }
-        input { 
-            padding: 12px; width: 90%; margin: 10px 0; 
-            border-radius: 5px; border: 1px solid #333; background: #222; color: white;
-        }
-        .login-btn { 
-            background: red; color: white; padding: 12px; width: 100%; 
-            border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px;
-        }
-
-        /* মেইন টিভি ইন্টারফেস */
+        body { margin: 0; font-family: sans-serif; background: #000; color: white; overflow: hidden; }
+        #login-screen, #expire-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+        .login-box { background: #222; padding: 30px; border-radius: 15px; text-align: center; border: 2px solid red; width: 80%; max-width: 350px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; font-size: 16px; }
+        .login-btn { background: red; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        #error-msg { color: yellow; font-size: 14px; margin-top: 10px; }
         .header { height: 60px; background: red; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-weight: bold; }
-        .content-frame { width: 100%; height: calc(100% - 110px); border: none; }
-        .footer { height: 50px; background: #111; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666; }
-        
-        #expire-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 6000; text-align: center; padding-top: 150px; }
+        .content-frame { width: 100%; height: calc(100vh - 110px); border: none; background: #000; }
+        .footer { height: 50px; background: #111; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #888; }
+        .logout-btn { background: white; color: red; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -42,84 +25,95 @@
             <input type="text" id="usernameInput" placeholder="ইউজারনেম (Username)">
             <input type="password" id="pinInput" placeholder="পিন (PIN)">
             <button class="login-btn" onclick="checkLogin()">লগইন করুন</button>
-            <p id="error-msg" style="color:yellow; font-size:13px; margin-top:10px;"></p>
+            <p id="error-msg"></p>
         </div>
     </div>
 
-    <div id="expire-screen">
+    <div id="expire-screen" style="display:none;">
         <h1 style="color:red;">মেয়াদ শেষ!</h1>
         <p>আপনার ৩০ দিনের মেয়াদ শেষ হয়েছে।</p>
-        <p>আবার চালু করতে রিচার্জ করুন। যোগাযোগ: 01XXXXXXXXX</p>
-        <button class="login-btn" onclick="logout()" style="width: auto; padding: 10px 20px;">লগআউট</button>
+        <p>আবার চালু করতে যোগাযোগ করুন: 01XXXXXXXXX</p>
+        <button class="login-btn" onclick="logout()" style="width: auto; padding: 10px 20px;">পিছনে যান</button>
     </div>
 
     <div class="header">
         <span>FUTURE LINK LIVE</span>
-        <button onclick="logout()" style="background:white; color:red; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer; font-weight:bold;">LOGOUT</button>
+        <button class="logout-btn" onclick="logout()">লগআউট</button>
     </div>
 
-    <iframe class="content-frame" src="https://live.hplink.com.bd/" title="HP Link Live Content"></iframe>
+    <iframe class="content-frame" src="https://live.hplink.com.bd/" title="Live Content"></iframe>
 
     <div class="footer">© FUTURE LINK | ISP SERVICE</div>
 
     <script>
+        // আপনার ফায়ারবেস লিঙ্ক
         const dbURL = "https://futurelink-c5b45-default-rtdb.firebaseio.com/users.json";
 
-async function checkLogin() {
-    const userInput = document.getElementById('usernameInput').value.trim().toLowerCase();
-    const pinInput = document.getElementById('pinInput').value.trim();
-    const errorMsg = document.getElementById('error-msg');
+        // লগইন চেক করার ফাংশন
+        async function checkLogin() {
+            const userIn = document.getElementById('usernameInput').value.trim().toLowerCase();
+            const pinIn = document.getElementById('pinInput').value.trim();
+            const error = document.getElementById('error-msg');
 
-    if (!userInput || !pinInput) {
-        errorMsg.innerText = "ইউজার এবং পিন দিন!";
-        return;
-    }
+            if (!userIn || !pinIn) {
+                error.innerText = "ইউজার এবং পিন দিন!";
+                return;
+            }
 
-    try {
-        const response = await fetch(dbURL);
-        const allUsers = await response.json();
-        let isSuccess = false;
+            try {
+                const res = await fetch(dbURL);
+                const data = await res.json();
+                let found = false;
 
-        // ফায়ারবেস থেকে আপনার বানানো সব ইউজার চেক করা হচ্ছে
-        for (let key in allUsers) {
-            if (allUsers[key].username === userInput && allUsers[key].pin === pinInput) {
-                isSuccess = true;
-                localStorage.setItem('currentUser', userInput);
-                localStorage.setItem('expiryDate', allUsers[key].expiry);
-                location.reload(); // লগইন সফল
-                break;
+                for (let key in data) {
+                    // ডাটাবেসের তথ্যের সাথে মিলানো হচ্ছে
+                    if (data[key].username === userIn && data[key].pin === pinIn) {
+                        found = true;
+                        localStorage.setItem('currentUser', userIn);
+                        localStorage.setItem('expiryDate', data[key].expiry);
+                        startExpiryCheck(); // সাথে সাথে চেক করবে
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    error.innerText = "ইউজারনেম বা পিন ভুল!";
+                }
+            } catch (e) {
+                error.innerText = "সার্ভার সমস্যা! ডাটাবেস চেক করুন।";
             }
         }
 
-        if (!isSuccess) {
-            errorMsg.innerText = "ইউজারনেম বা পিন ভুল!";
-        }
-    } catch (e) {
-        errorMsg.innerText = "সার্ভার সমস্যা! ডাটাবেস চেক করুন।";
-    }
-}
-function startExpiryCheck() {
-    const currentUser = localStorage.getItem('currentUser');
-    const expiryDateStr = localStorage.getItem('expiryDate');
+        // মেয়াদ চেক করার ফাংশন
+        function startExpiryCheck() {
+            const user = localStorage.getItem('currentUser');
+            const expiry = localStorage.getItem('expiryDate');
 
-    if (currentUser && expiryDateStr) {
-        const now = new Date();
-        const expiryDate = new Date(expiryDateStr);
+            if (user && expiry) {
+                const now = new Date();
+                const expireDate = new Date(expiry);
 
-        // আজকের তারিখ মেয়াদের চেয়ে বেশি হলে লক করে দেবে
-        if (now > expiryDate) {
-            document.getElementById('expire-screen').style.display = 'block';
-            document.getElementById('login-screen').style.display = 'none';
+                if (now > expireDate) {
+                    document.getElementById('expire-screen').style.display = 'flex';
+                    document.getElementById('login-screen').style.display = 'none';
+                } else {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('expire-screen').style.display = 'none';
+                }
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
+            }
         }
-    }
-}
+
+        // লগআউট ফাংশন
         function logout() {
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('expiryDate');
             location.reload();
         }
 
+        // পেজ লোড হওয়ার সময় চেক করবে
         window.onload = startExpiryCheck;
     </script>
-
 </body>
 </html>
