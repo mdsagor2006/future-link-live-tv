@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONU Master Panel - Suraiya</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
+        .navbar { display: flex; background: #2c3e50; padding: 10px; justify-content: space-around; position: sticky; top: 0; z-index: 100; }
+        .navbar button { background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 10px; transition: 0.3s; }
+        .navbar button.active { border-bottom: 3px solid #00d2ff; color: #00d2ff; font-weight: bold; }
+        
+        .panel { display: none; padding: 20px; max-width: 600px; margin: auto; }
+        .panel.active { display: block; }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { text-align: center; color: #333; }
+        
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-save { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        
+        #searchBox { position: sticky; top: 60px; z-index: 99; background: #fff9c4; border: 2px solid #fbc02d; font-weight: bold; margin-bottom: 20px; }
+        
+        .entry { border-left: 5px solid #007bff; }
+        .entry b { color: #555; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-edit { flex: 1; background: #ffc107; padding: 8px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-delete { flex: 1; background: #dc3545; color: white; padding: 8px; border: none; border-radius: 5px; cursor: pointer; }
+        .total-count { text-align: right; font-size: 13px; color: #666; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <button id="tab1" class="active" onclick="openPanel('add-panel', 'tab1')">➕ নতুন যুক্ত করুন</button>
+    <button id="tab2" onclick="openPanel('list-panel', 'tab2')">📋 অনু তালিকা দেখুন</button>
+</div>
+
+<div id="add-panel" class="panel active">
+    <div class="card">
+        <h2 id="formTitle">নতুন ONU এন্ট্রি</h2>
+        <input type="hidden" id="editIndex">
+        <input type="text" id="name" placeholder="১. গ্রাহকের নাম">
+        <input type="text" id="mac" placeholder="২. MAC Address">
+        <input type="text" id="number" placeholder="৩. ফোন নম্বর">
+        <input type="text" id="address" placeholder="৪. ঠিকানা">
+        <button id="mainBtn" class="btn-save" onclick="saveData()">সেভ করুন</button>
+    </div>
+</div>
+
+<div id="list-panel" class="panel">
+    <input type="text" id="searchBox" placeholder="ম্যাক, নাম বা নম্বর দিয়ে সার্চ..." onkeyup="showData()">
+    <div id="dataList"></div>
+</div>
+
+<script>
+    // প্যানেল পরিবর্তন করার ফাংশন
+    function openPanel(panelId, tabId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.navbar button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(panelId).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        
+        if(panelId === 'list-panel') showData();
+    }
+
+    // ডাটা সেভ বা আপডেট
+    function saveData() {
+        let name = document.getElementById('name').value;
+        let mac = document.getElementById('mac').value;
+        let number = document.getElementById('number').value;
+        let address = document.getElementById('address').value;
+        let editIndex = document.getElementById('editIndex').value;
+
+        if(!name || !mac) { alert("নাম এবং ম্যাক দিন!"); return; }
+
+        let onuData = JSON.parse(localStorage.getItem('onuList')) || [];
+
+        if(editIndex === "") {
+            onuData.push({ name, mac, number, address });
+            alert("সফলভাবে সেভ হয়েছে!");
+        } else {
+            onuData[editIndex] = { name, mac, number, address };
+            alert("আপডেট সম্পন্ন হয়েছে!");
+            document.getElementById('editIndex').value = "";
+            document.getElementById('mainBtn').innerText = "সেভ করুন";
+            document.getElementById('formTitle').innerText = "নতুন ONU এন্ট্রি";
+        }
+
+        localStorage.setItem('onuList', JSON.stringify(onuData));
+        clearForm();
+        openPanel('list-panel', 'tab2'); // সেভ করার পর লিস্ট প্যানেলে নিয়ে যাবে
+    }
+
+    // লিস্ট দেখানোর ফাংশন
+    function showData() {
+        let onuData = JSON.parse(localStorage.getItem('onuList')) || [];
+        let list = document.getElementById('dataList');
+        let filter = document.getElementById('searchBox').value.toUpperCase();
+        
+        list.innerHTML = `<div class="total-count">মোট: ${onuData.length} টি ONU</div>`;
+        
+        onuData.forEach((item, index) => {
+            let content = `${item.name} ${item.mac} ${item.number} ${item.address}`.toUpperCase();
+            if (content.indexOf(filter) > -1) {
+                list.innerHTML += `
+                    <div class="card entry">
+                        <b>নাম:</b> ${item.name} <br>
+                        <b>MAC:</b> ${item.mac} <br>
+                        <b>মোবাইল:</b> ${item.number} <br>
+                        <b>ঠিকানা:</b> ${item.address}
+                        <div class="btn-group">
+                            <button class="btn-edit" onclick="editData(${index})">ইডিট</button>
+                            <button class="btn-delete" onclick="deleteData(${index})">ডিলিট</button>
+                        </div>
+                    </div>`;
+            }
+        });
+    }
+
+    function deleteData(index) {
+        if(confirm("মুছে ফেলতে চান?")) {
+            let onuData = JSON.parse(localStorage.getItem('onuList'));
+            onuData.splice(index, 1);
+            localStorage.setItem('onuList', JSON.stringify(onuData));
+            showData();
+        }
+    }
+
+    function editData(index) {
+        let onuData = JSON.parse(localStorage.getItem('onuList'));
+        let item = onuData[index];
+
+        document.getElementById('name').value = item.name;
+        document.getElementById('mac').value = item.mac;
+        document.getElementById('number').value = item.number;
+        document.getElementById('address').value = item.address;
+        document.getElementById('editIndex').value = index;
+
+        document.getElementById('mainBtn').innerText = "আপডেট নিশ্চিত করুন";
+        document.getElementById('formTitle').innerText = "তথ্য সংশোধন করুন";
+        
+        openPanel('add-panel', 'tab1'); // ইডিট করার জন্য এন্ট্রি প্যানেলে নিয়ে আসবে
+    }
+
+    function clearForm() {
+        document.getElementById('name').value = '';
+        document.getElementById('mac').value = '';
+        document.getElementById('number').value = '';
+        document.getElementById('address').value = '';
+    }
+
+    showData();
+</script>
+
+</body>
+</html>
