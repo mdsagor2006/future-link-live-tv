@@ -3,28 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Future Link Admin - Master</title>
+    <title>Future Link Admin - Master Final</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #121212; color: #ffffff; margin: 0; padding: 10px; }
         .header { text-align: center; color: #e74c3c; font-weight: bold; font-size: 22px; margin: 15px 0; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: #1e272e; padding: 15px 5px; border-radius: 10px; text-align: center; border-bottom: 4px solid #3498db; }
-        .stat-card h4 { margin: 0; font-size: 10px; color: #bdc3c7; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-card { background: #1e272e; padding: 12px 5px; border-radius: 10px; text-align: center; border-bottom: 4px solid #3498db; cursor: pointer; }
+        .stat-card h4 { margin: 0; font-size: 10px; color: #bdc3c7; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 16px; font-weight: bold; }
+
+        .company-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+        .comp-card { background: #2c3e50; padding: 10px; border-radius: 8px; text-align: center; border-bottom: 3px solid #f1c40f; cursor: pointer; }
+        .comp-card h5 { margin: 0; font-size: 9px; color: #f1c40f; }
+        .comp-card p { margin: 3px 0 0; font-size: 14px; font-weight: bold; }
+
         .form-section { background: #ffffff; color: #333; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none; background: white; }
         input[type="date"] { border: 2px solid #3498db; font-weight: bold; }
+        
+        .quick-amounts { display: flex; gap: 5px; margin-top: 5px; }
+        .amt-btn { background: #eee; border: 1px solid #ccc; padding: 5px; border-radius: 4px; font-size: 11px; cursor: pointer; flex: 1; font-weight: bold; text-align: center; color: #333; }
+
         .btn-submit { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; margin-top: 15px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .btn-clear-all { width: 100%; padding: 10px; background: #c0392b; color: white; border: none; border-radius: 8px; margin-top: 10px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        /* অল ডিলিট বাটন স্টাইল */
+        .btn-delete-all { width: 100%; padding: 10px; background: #c0392b; color: white; border: none; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 14px; cursor: pointer; opacity: 0.8; }
+        .btn-delete-all:hover { opacity: 1; background: #e74c3c; }
+        
         .table-container { overflow-x: auto; background: #2c3e50; border-radius: 10px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 650px; }
         th { background: #1a252f; color: #bdc3c7; padding: 12px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #34495e; color: #ecf0f1; }
-        .action-btns { display: flex; gap: 8px; }
+        .company-tag { color: #f1c40f; font-weight: bold; font-size: 10px; text-transform: uppercase; }
         .btn-del { background: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-edit { background: #f1c40f; color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-edit { background: #f1c40f; color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        
+        .filter-badge { text-align: center; margin-bottom: 10px; color: #2ecc71; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -32,8 +48,8 @@
     <div class="header">👤 Future Link Admin</div>
 
     <div class="stats-grid">
-        <div class="stat-card" style="border-color: #3498db; grid-column: span 2;">
-            <h4>মোট সংযোগ</h4><p id="totalLine">0</p>
+        <div class="stat-card" style="border-color: #3498db; grid-column: span 2;" onclick="window.filterByCompany('ALL')">
+            <h4>মোট সংযোগ (সব দেখতে ক্লিক)</h4><p id="totalLine">0</p>
         </div>
         <div class="stat-card" style="border-color: #f1c40f;"><h4>মোট রিচার্জ</h4><p id="totalRecharge">0 ৳</p></div>
         <div class="stat-card" style="border-color: #2ecc71;"><h4>সার্ভিস চার্জ</h4><p id="totalService">0 ৳</p></div>
@@ -41,28 +57,42 @@
         <div class="stat-card" style="border-color: #9b59b6;"><h4>অনু খরচ</h4><p id="totalOnu">0 ৳</p></div>
     </div>
 
+    <div class="company-stats-grid">
+        <div class="comp-card" onclick="window.filterByCompany('HP')"><h5>HP</h5><p id="adminHP">0</p></div>
+        <div class="comp-card" onclick="window.filterByCompany('PMTL')"><h5>PMTL</h5><p id="adminPMTL">0</p></div>
+        <div class="comp-card" onclick="window.filterByCompany('Orbit')"><h5>ORBIT</h5><p id="adminOrbit">0</p></div>
+    </div>
+
+    <div id="filterShow" class="filter-badge"></div>
+
     <div class="form-section">
         <input type="hidden" id="editKey">
+        <input type="hidden" id="editTimestamp">
         <div class="input-grid">
-            <input type="text" id="uName" placeholder="নাম">
+            <select id="uCompany"><option value="HP">HP</option><option value="PMTL">PMTL</option><option value="Orbit">Orbit</option></select>
+            <input type="text" id="uName" placeholder="গ্রাহকের নাম">
             <input type="text" id="uAddress" placeholder="ঠিকানা">
-            <input type="number" id="uRecharge" placeholder="রিচার্জ টাকা">
-            <input type="number" id="uService" placeholder="সার্ভিস চার্জ">
+            <input type="number" id="uRecharge" placeholder="রিচার্জ">
+            <div>
+                <input type="number" id="uService" placeholder="সার্ভিস চার্জ">
+                <div class="quick-amounts">
+                    <div class="amt-btn" onclick="document.getElementById('uService').value=200">200</div>
+                    <div class="amt-btn" onclick="document.getElementById('uService').value=100">100</div>
+                    <div class="amt-btn" onclick="document.getElementById('uService').value=50">50</div>
+                    <div class="amt-btn" onclick="document.getElementById('uService').value=0">0</div>
+                </div>
+            </div>
             <input type="number" id="uFiber" placeholder="ফাইবার খরচ">
             <input type="number" id="uOnu" placeholder="অনু খরচ">
             <input type="date" id="uDate"> 
         </div>
         <button class="btn-submit" id="saveBtn">সেভ করুন</button>
-        <button class="btn-clear-all" id="clearAllBtn">🗑 সব ডাটা মুছুন</button>
+        <button class="btn-delete-all" onclick="window.deleteAllData()">🗑 সব ডাটা মুছে ফেলুন</button>
     </div>
 
     <div class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>নাম ও ঠিকানা</th><th>চার্জ (R/S)</th><th>খরচ (F/O)</th><th>তারিখ</th><th>অ্যাকশন</th>
-                </tr>
-            </thead>
+            <thead><tr><th>কোম্পানি ও নাম</th><th>ঠিকানা</th><th>চার্জ (R/S)</th><th>খরচ (F/O)</th><th>তারিখ</th><th>অ্যাকশন</th></tr></thead>
             <tbody id="dataTable"></tbody>
         </table>
     </div>
@@ -76,91 +106,116 @@
         const db = getDatabase(app);
         const dataRef = ref(db, 'future_link_v9');
 
+        let allRecords = [];
+        let currentFilter = 'ALL';
+
         document.getElementById('uDate').value = new Date().toISOString().split('T')[0];
 
-        // ডাটা সেভ এবং আপডেট
+        window.filterByCompany = function(company) {
+            currentFilter = company;
+            renderDisplay();
+            document.getElementById('filterShow').innerText = company === 'ALL' ? "" : "ফিল্টার: " + company;
+        };
+
+        function renderDisplay() {
+            let html = "";
+            let filtered = currentFilter === 'ALL' ? allRecords : allRecords.filter(item => (item.company || "").toLowerCase() === currentFilter.toLowerCase());
+
+            filtered.forEach((item) => {
+                html += `<tr>
+                    <td><span class="company-tag">${item.company}</span><br><strong>${item.name}</strong></td>
+                    <td>${item.address}</td>
+                    <td>${item.recharge} / ${item.service}</td>
+                    <td>${item.fiber} / ${item.onu}</td>
+                    <td>${item.date}</td>
+                    <td>
+                        <button class="btn-edit" onclick="window.loadEditData('${item.id}')">✎</button>
+                        <button class="btn-del" onclick="window.delData('${item.id}')">🗑</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('dataTable').innerHTML = html;
+        }
+
+        onValue(dataRef, (snapshot) => {
+            allRecords = [];
+            let hp = 0, pmtl = 0, orb = 0;
+            let tr = 0, ts = 0, tf = 0, to = 0;
+
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    let val = child.val();
+                    val.id = child.key;
+                    allRecords.push(val);
+
+                    let c = (val.company || "").toUpperCase();
+                    if(c === "HP") hp++; else if(c === "PMTL") pmtl++; else if(c === "ORBIT") orb++;
+                    tr += (val.recharge || 0); ts += (val.service || 0);
+                    tf += (val.fiber || 0); to += (val.onu || 0);
+                });
+
+                allRecords.sort((a, b) => {
+                    if (b.date !== a.date) return new Date(b.date) - new Date(a.date);
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                });
+            }
+
+            renderDisplay();
+            document.getElementById('totalLine').innerText = allRecords.length;
+            document.getElementById('totalRecharge').innerText = tr + " ৳";
+            document.getElementById('totalService').innerText = ts + " ৳";
+            document.getElementById('totalFiber').innerText = tf + " ৳";
+            document.getElementById('totalOnu').innerText = to + " ৳";
+            document.getElementById('adminHP').innerText = hp;
+            document.getElementById('adminPMTL').innerText = pmtl;
+            document.getElementById('adminOrbit').innerText = orb;
+        });
+
         document.getElementById('saveBtn').onclick = function() {
             const key = document.getElementById('editKey').value;
+            const oldT = document.getElementById('editTimestamp').value;
             const data = {
+                company: document.getElementById('uCompany').value,
                 name: document.getElementById('uName').value,
                 address: document.getElementById('uAddress').value,
                 recharge: parseFloat(document.getElementById('uRecharge').value) || 0,
                 service: parseFloat(document.getElementById('uService').value) || 0,
                 fiber: parseFloat(document.getElementById('uFiber').value) || 0,
                 onu: parseFloat(document.getElementById('uOnu').value) || 0,
-                date: document.getElementById('uDate').value
+                date: document.getElementById('uDate').value,
+                timestamp: key ? parseInt(oldT) : Date.now()
             };
-
             if(!data.name) return alert("নাম দিন");
-
-            if(key) {
-                update(ref(db, 'future_link_v9/' + key), data).then(() => {
-                    alert("সফলভাবে আপডেট হয়েছে!");
-                    clearForm();
-                });
-            } else {
-                push(dataRef, data).then(() => clearForm());
-            }
+            if(key) update(ref(db, 'future_link_v9/' + key), data).then(() => clearForm());
+            else push(dataRef, data).then(() => clearForm());
         };
 
         function clearForm() {
             document.getElementById('editKey').value = "";
+            document.getElementById('editTimestamp').value = "";
             document.querySelectorAll('input:not([type="date"])').forEach(i => i.value = "");
             document.getElementById('saveBtn').innerText = "সেভ করুন";
             document.getElementById('saveBtn').style.background = "#27ae60";
         }
 
-        document.getElementById('clearAllBtn').onclick = function() {
-            if(confirm("সব ডাটা ডিলিট করবেন?")) remove(dataRef);
+        window.delData = (id) => { if(confirm("এই গ্রাহকের ডাটা ডিলিট করবেন?")) remove(ref(db, 'future_link_v9/' + id)); };
+
+        // অল ডিলিট ফাংশন
+        window.deleteAllData = function() {
+            if(confirm("সাবধান! আপনি কি নিশ্চিত যে আপনি সব ডাটা চিরতরে মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।")) {
+                remove(dataRef).then(() => {
+                    alert("সব ডাটা সফলভাবে মুছে ফেলা হয়েছে।");
+                }).catch(err => alert("ভুল হয়েছে: " + err.message));
+            }
         };
 
-        // ডাটা লোড ও তারিখ অনুযায়ী সাজানো
-        onValue(dataRef, (snapshot) => {
-            let html = ""; let sRec = 0, sSer = 0, sFib = 0, sOnu = 0, count = 0;
-            let dataArray = [];
-
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    let item = child.val();
-                    item.id = child.key;
-                    dataArray.push(item);
-                });
-
-                // নতুন তারিখ উপরে রাখার জন্য
-                dataArray.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                dataArray.forEach((item) => {
-                    sRec += item.recharge; sSer += item.service; sFib += item.fiber; sOnu += item.onu; count++;
-                    
-                    html += `<tr>
-                        <td><strong>${item.name}</strong><br><small>${item.address}</small></td>
-                        <td>${item.recharge} / ${item.service}</td>
-                        <td>${item.fiber} / ${item.onu}</td>
-                        <td>${item.date}</td>
-                        <td class="action-btns">
-                            <button class="btn-edit" onclick="loadEditData('${item.id}')">✎</button>
-                            <button class="btn-del" onclick="window.delData('${item.id}')">🗑</button>
-                        </td>
-                    </tr>`;
-                });
-            }
-            document.getElementById('dataTable').innerHTML = html;
-            document.getElementById('totalLine').innerText = count;
-            document.getElementById('totalRecharge').innerText = sRec + " ৳";
-            document.getElementById('totalService').innerText = sSer + " ৳";
-            document.getElementById('totalFiber').innerText = sFib + " ৳";
-            document.getElementById('totalOnu').innerText = sOnu + " ৳";
-        });
-
-        // ডিলিট ফাংশন
-        window.delData = (id) => { if(confirm("ডিলিট করবেন?")) remove(ref(db, 'future_link_v9/' + id)); };
-
-        // এডিট লোড করার নতুন এবং নিরাপদ পদ্ধতি
         window.loadEditData = (id) => {
             onValue(ref(db, 'future_link_v9/' + id), (snap) => {
                 const item = snap.val();
                 if(!item) return;
                 document.getElementById('editKey').value = id;
+                document.getElementById('editTimestamp').value = item.timestamp || Date.now();
+                document.getElementById('uCompany').value = item.company;
                 document.getElementById('uName').value = item.name;
                 document.getElementById('uAddress').value = item.address;
                 document.getElementById('uRecharge').value = item.recharge;
@@ -168,7 +223,6 @@
                 document.getElementById('uFiber').value = item.fiber;
                 document.getElementById('uOnu').value = item.onu;
                 document.getElementById('uDate').value = item.date;
-                
                 document.getElementById('saveBtn').innerText = "আপডেট করুন";
                 document.getElementById('saveBtn').style.background = "#2980b9";
                 window.scrollTo({ top: 0, behavior: 'smooth' });
