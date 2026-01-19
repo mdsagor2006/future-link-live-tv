@@ -3,87 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Future Link - Customer List (Full Info)</title>
+    <title>Future Link - Customer View Master</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #121212; color: white; padding: 10px; margin: 0; }
-        .header { text-align: center; color: #3498db; font-size: 22px; margin: 20px 0; font-weight: bold; }
+        body { background-color: #0b1118; color: #ffffff; margin: 0; padding: 10px; }
         
-        .search-box { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; background: #1e272e; color: white; border: 1px solid #34495e; outline: none; font-size: 15px; }
+        /* কোম্পানি ভিত্তিক স্থায়ী লাইন কাউন্টার */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .comp-stat-card {
+            background: linear-gradient(145deg, #1e272e, #131b23);
+            padding: 12px 5px;
+            border-radius: 12px;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .comp-stat-card h5 { margin: 0; font-size: 11px; color: #3498db; text-transform: uppercase; }
+        .comp-stat-card p { margin: 5px 0 0; font-size: 16px; font-weight: bold; color: #f1c40f; }
 
-        /* কার্ড ডিজাইন */
-        .card { background: #1e272e; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 5px solid #3498db; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .customer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .name { font-size: 18px; font-weight: bold; color: #ffffff; }
-        .date { font-size: 11px; color: #3498db; }
+        /* সার্চ বক্স */
+        .search-container { margin-bottom: 15px; }
+        #searchBox { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #2c3e50; 
+            background: #1a242d; color: white; font-size: 15px; outline: none;
+        }
+
+        /* কাস্টমার কার্ড ডিজাইন */
+        .customer-card {
+            background: #1a242d;
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .company-tag { color: #3498db; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .name { font-size: 20px; font-weight: bold; color: #ffffff; margin: 0; }
+        .date { font-size: 11px; color: #bdc3c7; }
+        .address { color: #bdc3c7; font-size: 13px; margin: 8px 0; display: flex; align-items: center; }
         
-        .address { font-size: 13px; color: #bdc3c7; margin-bottom: 10px; display: block; }
-        
-        /* খরচের গ্রিড */
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; }
-        .detail-item { font-size: 12px; color: #ecf0f1; }
-        .detail-item span { font-weight: bold; color: #2ecc71; } /* টাকা সবুজ রঙে */
+        .details-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            background: #131b23; padding: 12px; border-radius: 10px;
+            gap: 8px; margin-top: 12px;
+        }
+        .detail-item { font-size: 13px; color: #ecf0f1; }
+        .value { color: #2ecc71; font-weight: bold; margin-left: 4px; }
     </style>
 </head>
 <body>
 
-    <div class="header">📋 গ্রাহক তালিকা (Live)</div>
-    
-    <input type="text" class="search-box" id="searchBox" placeholder="🔎 গ্রাহকের নাম লিখে খুঁজুন...">
+    <div class="stats-container">
+        <div class="comp-stat-card">
+            <h5>HP</h5>
+            <p id="countHP">0</p>
+        </div>
+        <div class="comp-stat-card">
+            <h5>PMTL</h5>
+            <p id="countPMTL">0</p>
+        </div>
+        <div class="comp-stat-card">
+            <h5>Orbit</h5>
+            <p id="countOrbit">0</p>
+        </div>
+    </div>
 
-    <div id="listView">লোড হচ্ছে...</div>
+    <div class="search-container">
+        <input type="text" id="searchBox" placeholder="🔍 নাম বা ঠিকানা দিয়ে খুঁজুন..." onkeyup="filterCards()">
+    </div>
+
+    <div id="customerList">
+        </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // আপনার ফায়ারবেস কনফিগ
-        const firebaseConfig = { 
-            databaseURL: "https://future-link-admin-default-rtdb.firebaseio.com/" 
-        };
-
+        const firebaseConfig = { databaseURL: "https://future-link-admin-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const dataRef = ref(db, 'future_link_v9');
 
         onValue(dataRef, (snapshot) => {
-            window.fullData = snapshot;
-            render();
-        });
-
-        window.render = function() {
-            let search = document.getElementById('searchBox').value.toLowerCase();
             let html = "";
+            let dataArray = [];
             
-            if (!window.fullData || !window.fullData.exists()) {
-                document.getElementById('listView').innerHTML = "<p style='text-align:center; color:gray;'>কোনো তথ্য পাওয়া যায়নি</p>";
-                return;
-            }
+            // কোম্পানি কাউন্টার ভেরিয়েবল
+            let hp = 0, pmtl = 0, orbit = 0;
 
-            window.fullData.forEach((child) => {
-                let item = child.val();
-                if(item.name.toLowerCase().includes(search)) {
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    let item = child.val();
+                    dataArray.push(item);
+                    
+                    // কোম্পানির নাম চেক করে কাউন্ট বাড়ানো (ছোট বা বড় হাতের অক্ষর সমস্যা করবে না)
+                    let cName = (item.company || "").trim().toUpperCase();
+                    if(cName === "HP") hp++;
+                    else if(cName === "PMTL") pmtl++;
+                    else if(cName === "ORBIT") orbit++;
+                });
+
+                // তারিখ অনুযায়ী সাজানো
+                dataArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // কাউন্টার আপডেট করা
+                document.getElementById('countHP').innerText = hp + " Line";
+                document.getElementById('countPMTL').innerText = pmtl + " Line";
+                document.getElementById('countOrbit').innerText = orbit + " Line";
+
+                // কার্ড তৈরি
+                dataArray.forEach((item) => {
                     html += `
-                        <div class="card">
-                            <div class="customer-header">
-                                <div class="name">${item.name}</div>
-                                <div class="date">${item.date}</div>
-                            </div>
-                            <span class="address">📍 ${item.address || 'ঠিকানা নেই'}</span>
-                            
-                            <div class="details-grid">
-                                <div class="detail-item">💰 রিচার্জ: <span>${item.recharge}৳</span></div>
-                                <div class="detail-item">🛠 সার্ভিস: <span>${item.service || 0}৳</span></div>
-                                <div class="detail-item">🧵 ফাইবার: <span>${item.fiber || 0}৳</span></div>
-                                <div class="detail-item">🔌 অনু: <span>${item.onu || 0}৳</span></div>
-                            </div>
-                        </div>`;
-                }
-            });
-            document.getElementById('listView').innerHTML = html;
-        };
+                    <div class="customer-card">
+                        <div class="company-tag">${item.company || "N/A"}</div>
+                        <div class="header-row">
+                            <div class="name">${item.name}</div>
+                            <div class="date">${item.date}</div>
+                        </div>
+                        <div class="address">📍 ${item.address}</div>
+                        <div class="details-grid">
+                            <div class="detail-item">💰 রিচার্জ: <span class="value">${item.recharge}৳</span></div>
+                            <div class="detail-item">🛠 সার্ভিস: <span class="value">${item.service}৳</span></div>
+                            <div class="detail-item">🧵 ফাইবার: <span class="value">${item.fiber}৳</span></div>
+                            <div class="detail-item">🔌 অনু: <span class="value">${item.onu}৳</span></div>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('customerList').innerHTML = html;
+        });
+    </script>
 
-        document.getElementById('searchBox').addEventListener('input', render);
+    <script>
+        function filterCards() {
+            let input = document.getElementById("searchBox").value.toUpperCase();
+            let cards = document.getElementsByClassName("customer-card");
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].querySelector(".name").innerText;
+                let address = cards[i].querySelector(".address").innerText;
+                cards[i].style.display = (name.toUpperCase().indexOf(input) > -1 || address.toUpperCase().indexOf(input) > -1) ? "" : "none";
+            }
+        }
     </script>
 </body>
 </html>
