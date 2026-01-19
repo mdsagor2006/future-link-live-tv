@@ -3,83 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Future Link - Customer View Master</title>
+    <title>Future Link - Separated Stats</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0b1118; color: #ffffff; margin: 0; padding: 10px; }
+        body { background-color: #0b111a; color: #ffffff; margin: 0; padding: 10px; }
         
-        /* কোম্পানি ভিত্তিক স্থায়ী লাইন কাউন্টার */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .comp-stat-card {
-            background: linear-gradient(145deg, #1e272e, #131b23);
-            padding: 12px 5px;
-            border-radius: 12px;
-            text-align: center;
-            border-bottom: 3px solid #3498db;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .comp-stat-card h5 { margin: 0; font-size: 11px; color: #3498db; text-transform: uppercase; }
-        .comp-stat-card p { margin: 5px 0 0; font-size: 16px; font-weight: bold; color: #f1c40f; }
+        .header { text-align: center; color: #38bdf8; font-size: 20px; font-weight: bold; margin: 15px 0; }
 
-        /* সার্চ বক্স */
-        .search-container { margin-bottom: 15px; }
-        #searchBox { 
-            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #2c3e50; 
-            background: #1a242d; color: white; font-size: 15px; outline: none;
-        }
+        /* কোম্পানি ফিল্টার কার্ড */
+        .filter-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+        .filter-card { background: #1e293b; padding: 10px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .filter-card.active { border-bottom: 3px solid #38bdf8; background: #162130; }
+        .filter-card h5 { margin: 0; font-size: 9px; color: #38bdf8; text-transform: uppercase; }
+        .filter-card p { margin: 3px 0 0; font-size: 13px; font-weight: bold; }
 
-        /* কাস্টমার কার্ড ডিজাইন */
-        .customer-card {
-            background: #1a242d;
-            border-radius: 15px;
-            padding: 18px;
-            margin-bottom: 15px;
-            border-left: 5px solid #3498db;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .company-tag { color: #3498db; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-        .name { font-size: 20px; font-weight: bold; color: #ffffff; margin: 0; }
-        .date { font-size: 11px; color: #bdc3c7; }
-        .address { color: #bdc3c7; font-size: 13px; margin: 8px 0; display: flex; align-items: center; }
+        /* টাকার হিসাব কার্ড - ফাইবার ও অনু আলাদা */
+        .money-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        .money-card { background: #162130; padding: 12px 5px; border-radius: 10px; text-align: center; border-top: 2px solid #38bdf8; }
+        .money-card h6 { margin: 0; font-size: 9px; color: #94a3b8; text-transform: uppercase; }
+        .money-card p { margin: 5px 0 0; font-size: 13px; font-weight: bold; color: #4ade80; }
+        .money-card.cost p { color: #38bdf8; }
+
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 12px 15px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: white; outline: none; }
+
+        .list-container { display: grid; gap: 15px; }
+        .user-card { background: #162130; padding: 15px; border-radius: 15px; border-left: 6px solid #38bdf8; position: relative; }
+        .comp-label { font-size: 10px; color: #38bdf8; font-weight: bold; margin-bottom: 5px; display: block; }
+        .name-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .user-name { font-size: 18px; font-weight: bold; color: #ffffff; }
+        .entry-date { font-size: 11px; color: #64748b; }
+        .address { font-size: 13px; color: #94a3b8; margin: 8px 0 12px 0; }
         
-        .details-grid {
-            display: grid; grid-template-columns: 1fr 1fr;
-            background: #131b23; padding: 12px; border-radius: 10px;
-            gap: 8px; margin-top: 12px;
-        }
-        .detail-item { font-size: 13px; color: #ecf0f1; }
-        .value { color: #2ecc71; font-weight: bold; margin-left: 4px; }
+        .info-grid { background: #1c2a3d; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 10px; }
+        .info-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #e2e8f0; }
+        .val { font-weight: bold; color: #4ade80; } 
+        .cost-val { color: #38bdf8; font-weight: bold; } 
     </style>
 </head>
 <body>
 
-    <div class="stats-container">
-        <div class="comp-stat-card">
-            <h5>HP</h5>
-            <p id="countHP">0</p>
-        </div>
-        <div class="comp-stat-card">
-            <h5>PMTL</h5>
-            <p id="countPMTL">0</p>
-        </div>
-        <div class="comp-stat-card">
-            <h5>Orbit</h5>
-            <p id="countOrbit">0</p>
-        </div>
+    <div class="header">🌐 Future Link Network</div>
+
+    <div class="filter-container">
+        <div class="filter-card active" id="btn-ALL" onclick="filterData('ALL')"><h5>Total</h5><p id="count-ALL">0</p></div>
+        <div class="filter-card" id="btn-HP" onclick="filterData('HP')"><h5>HP</h5><p id="count-HP">0</p></div>
+        <div class="filter-card" id="btn-PMTL" onclick="filterData('PMTL')"><h5>PMTL</h5><p id="count-PMTL">0</p></div>
+        <div class="filter-card" id="btn-Orbit" onclick="filterData('Orbit')"><h5>ORBIT</h5><p id="count-Orbit">0</p></div>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="searchBox" placeholder="🔍 নাম বা ঠিকানা দিয়ে খুঁজুন..." onkeyup="filterCards()">
+    <div class="money-stats">
+        <div class="money-card"><h6>মোট রিচার্জ</h6><p id="sum-recharge">0৳</p></div>
+        <div class="money-card"><h6>সার্ভিস চার্জ</h6><p id="sum-service">0৳</p></div>
+    </div>
+    <div class="money-stats">
+        <div class="money-card cost"><h6>ফাইবার খরচ</h6><p id="sum-fiber">0৳</p></div>
+        <div class="money-card cost"><h6>অনু খরচ</h6><p id="sum-onu">0৳</p></div>
     </div>
 
-    <div id="customerList">
-        </div>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 নাম বা ঠিকানা দিয়ে খুঁজুন..." onkeyup="renderList()">
+    </div>
+
+    <div id="customerList" class="list-container"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -90,66 +76,78 @@
         const db = getDatabase(app);
         const dataRef = ref(db, 'future_link_v9');
 
-        onValue(dataRef, (snapshot) => {
-            let html = "";
-            let dataArray = [];
-            
-            // কোম্পানি কাউন্টার ভেরিয়েবল
-            let hp = 0, pmtl = 0, orbit = 0;
+        let allRecords = [];
+        let currentFilter = 'ALL';
 
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    let item = child.val();
-                    dataArray.push(item);
-                    
-                    // কোম্পানির নাম চেক করে কাউন্ট বাড়ানো (ছোট বা বড় হাতের অক্ষর সমস্যা করবে না)
-                    let cName = (item.company || "").trim().toUpperCase();
-                    if(cName === "HP") hp++;
-                    else if(cName === "PMTL") pmtl++;
-                    else if(cName === "ORBIT") orbit++;
-                });
+        window.filterData = (company) => {
+            currentFilter = company;
+            document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('btn-' + company).classList.add('active');
+            renderList();
+        };
 
-                // তারিখ অনুযায়ী সাজানো
-                dataArray.sort((a, b) => new Date(b.date) - new Date(a.date));
+        function renderList() {
+            const listDiv = document.getElementById('customerList');
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            listDiv.innerHTML = "";
 
-                // কাউন্টার আপডেট করা
-                document.getElementById('countHP').innerText = hp + " Line";
-                document.getElementById('countPMTL').innerText = pmtl + " Line";
-                document.getElementById('countOrbit').innerText = orbit + " Line";
+            let filtered = currentFilter === 'ALL' ? allRecords : allRecords.filter(item => (item.company || "").toLowerCase() === currentFilter.toLowerCase());
 
-                // কার্ড তৈরি
-                dataArray.forEach((item) => {
-                    html += `
-                    <div class="customer-card">
-                        <div class="company-tag">${item.company || "N/A"}</div>
-                        <div class="header-row">
-                            <div class="name">${item.name}</div>
-                            <div class="date">${item.date}</div>
-                        </div>
+            filtered = filtered.filter(item => 
+                (item.name || "").toLowerCase().includes(searchText) || (item.address || "").toLowerCase().includes(searchText)
+            );
+
+            let tRec = 0, tSer = 0, tFib = 0, tOnu = 0;
+            filtered.forEach(item => {
+                tRec += (item.recharge || 0);
+                tSer += (item.service || 0);
+                tFib += (item.fiber || 0);
+                tOnu += (item.onu || 0);
+                
+                const card = `
+                    <div class="user-card" style="border-left-color: ${getBorderColor(item.company)}">
+                        <span class="comp-label">${item.company}</span>
+                        <div class="name-row"><span class="user-name">${item.name}</span><span class="entry-date">${item.date}</span></div>
                         <div class="address">📍 ${item.address}</div>
-                        <div class="details-grid">
-                            <div class="detail-item">💰 রিচার্জ: <span class="value">${item.recharge}৳</span></div>
-                            <div class="detail-item">🛠 সার্ভিস: <span class="value">${item.service}৳</span></div>
-                            <div class="detail-item">🧵 ফাইবার: <span class="value">${item.fiber}৳</span></div>
-                            <div class="detail-item">🔌 অনু: <span class="value">${item.onu}৳</span></div>
+                        <div class="info-grid">
+                            <div class="info-item">💰 <span class="val">রিচার্জ: ${item.recharge}৳</span></div>
+                            <div class="info-item">🛠 <span class="val">সার্ভিস: ${item.service}৳</span></div>
+                            <div class="info-item">🧵 <span class="cost-val">ফাইবার: ${item.fiber}৳</span></div>
+                            <div class="info-item">🔌 <span class="cost-val">অনু: ${item.onu}৳</span></div>
                         </div>
                     </div>`;
-                });
-            }
-            document.getElementById('customerList').innerHTML = html;
-        });
-    </script>
+                listDiv.innerHTML += card;
+            });
 
-    <script>
-        function filterCards() {
-            let input = document.getElementById("searchBox").value.toUpperCase();
-            let cards = document.getElementsByClassName("customer-card");
-            for (let i = 0; i < cards.length; i++) {
-                let name = cards[i].querySelector(".name").innerText;
-                let address = cards[i].querySelector(".address").innerText;
-                cards[i].style.display = (name.toUpperCase().indexOf(input) > -1 || address.toUpperCase().indexOf(input) > -1) ? "" : "none";
-            }
+            document.getElementById('sum-recharge').innerText = tRec + "৳";
+            document.getElementById('sum-service').innerText = tSer + "৳";
+            document.getElementById('sum-fiber').innerText = tFib + "৳";
+            document.getElementById('sum-onu').innerText = tOnu + "৳";
         }
+
+        function getBorderColor(company) {
+            const colors = {'HP': '#f1c40f', 'PMTL': '#2ecc71', 'Orbit': '#e67e22'};
+            return colors[company] || '#38bdf8';
+        }
+
+        onValue(dataRef, (snapshot) => {
+            allRecords = [];
+            let hp = 0, pmtl = 0, orb = 0;
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    let val = child.val();
+                    allRecords.push(val);
+                    let c = (val.company || "").toUpperCase();
+                    if(c === "HP") hp++; else if(c === "PMTL") pmtl++; else if(c === "ORBIT") orb++;
+                });
+                allRecords.sort((a, b) => new Date(b.date) - new Date(a.date) || (b.timestamp - a.timestamp));
+            }
+            document.getElementById('count-ALL').innerText = allRecords.length;
+            document.getElementById('count-HP').innerText = hp;
+            document.getElementById('count-PMTL').innerText = pmtl;
+            document.getElementById('count-Orbit').innerText = orb;
+            renderList();
+        });
     </script>
 </body>
 </html>
